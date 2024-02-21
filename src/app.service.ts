@@ -2,6 +2,7 @@ import { Inject, Injectable } from '@nestjs/common';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { Cache } from 'cache-manager';
 import puppeteer from 'puppeteer';
+const IS_PRODUCTION = process.env.NODE_ENV === 'production';
 
 interface companiesProps {
   url: string;
@@ -18,9 +19,17 @@ export interface props {
 export class AppService {
   constructor(@Inject(CACHE_MANAGER) private cacheManager: Cache) {}
 
+  getBrowser = () =>
+    IS_PRODUCTION
+      ? puppeteer.connect({
+          browserWSEndpoint:
+            'wss://chrome.browserless.io?token=9257730f-3de8-4366-b976-adedf01ce56d',
+        })
+      : puppeteer.launch();
+
   public async getProducts() {
     const cacheKey = 'shipping_companies_data';
-    const browser = await puppeteer.launch();
+    const browser = await this.getBrowser();
 
     try {
       const page = await browser.newPage();
